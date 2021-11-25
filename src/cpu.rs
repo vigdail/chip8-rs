@@ -1,4 +1,4 @@
-use crate::{bus::Bus, ENTRY_POINT};
+use crate::{bus::Bus, stack::Stack, ENTRY_POINT};
 
 pub struct CPU {
     vx: [u8; 16],
@@ -7,38 +7,6 @@ pub struct CPU {
     sound_timer: u16,
     pc: u16,
     stack: Stack,
-}
-
-struct Stack {
-    data: [u16; 16],
-    sp: u8,
-}
-
-impl Stack {
-    pub fn new() -> Self {
-        Self {
-            data: [0; 16],
-            sp: 0,
-        }
-    }
-
-    pub fn push(&mut self, item: u16) {
-        if self.sp < 15 {
-            self.sp += 1;
-            *self.data.get_mut(self.sp as usize).unwrap() = item;
-        } else {
-            todo!("Return error here!");
-        }
-    }
-
-    pub fn pop(&mut self) -> Option<u16> {
-        let result = self.data.get(self.sp as usize).cloned();
-        if self.sp > 0 {
-            self.sp -= 1;
-        }
-
-        result
-    }
 }
 
 struct InstructionData {

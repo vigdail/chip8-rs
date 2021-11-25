@@ -7,6 +7,7 @@ mod cpu;
 mod framebuffer;
 mod keyboard;
 mod ram;
+mod stack;
 
 pub const ENTRY_POINT: usize = 0x200;
 
