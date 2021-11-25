@@ -22,6 +22,7 @@ impl RAM {
             return Err(RamError::BadWriteAddress);
         }
 
+        dbg!(address, data);
         for (offset, &byte) in data.iter().enumerate() {
             self.memory[address + offset] = byte;
         }

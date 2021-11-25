@@ -15,7 +15,15 @@ impl Bus {
         }
     }
 
-    pub fn write_ram(&mut self, data: &[u8], offset: usize) {
-        self.ram.write(data, offset);
+    pub fn read_ram(&self, address: usize) -> u8 {
+        self.ram.read(address).unwrap() // TODO: Handle error
+    }
+
+    pub fn write_ram(&mut self, data: &[u8], address: usize) {
+        self.ram.write(data, address).unwrap(); // TODO: Handle error
+    }
+
+    pub fn clear_screen(&mut self) {
+        self.framebuffer.clear();
     }
 }
