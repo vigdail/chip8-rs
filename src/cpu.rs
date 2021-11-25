@@ -42,21 +42,51 @@ impl Cpu {
         match f {
             0x0 => match params.kk {
                 0x0e => {
+                    // CLS
                     bus.clear_screen();
                     self.pc += 2;
                 }
                 0xee => {
+                    // RET
                     let addr = self.stack.pop().unwrap(); // TODO: Handle error
                     self.pc = addr;
                 }
                 _ => unimplemented!(),
             },
             0x1 => {
+                // JP nnn
                 self.pc = params.nnn;
             }
             0x2 => {
+                // CALL nnn
                 self.stack.push(self.pc + 2).unwrap(); // TODO: Handle error
                 self.pc = params.nnn;
+            }
+            0x3 => {
+                // SE vx, byte
+                if self.vx[params.x as usize] == params.kk {
+                    self.pc += 2;
+                }
+                self.pc += 2;
+            }
+            0x4 => {
+                // SNE vx, byte
+                if self.vx[params.x as usize] != params.kk {
+                    self.pc += 2;
+                }
+                self.pc += 2;
+            }
+            0x5 => {
+                // SE vx, vy
+                if self.vx[params.x as usize] == self.vx[params.y as usize] {
+                    self.pc += 2;
+                }
+                self.pc += 2;
+            }
+            0x6 => {
+                // LD vx, kk
+                self.vx[params.x as usize] = params.kk;
+                self.pc += 2;
             }
             _ => todo!(),
         }
@@ -134,5 +164,59 @@ mod tests {
         assert_eq!(cpu.pc, 0x0202);
         cpu.run(&mut bus);
         assert_eq!(cpu.pc, 0x0206);
+    }
+
+    #[test]
+    fn skips() {
+        let mut cpu = Cpu::new();
+        let mut bus = Bus::new();
+        bus.write_ram(
+            &[
+                0x31, 0x01, // 0x0200: se v1 0x01
+                0x61, 0x0f, // 0x0202: ld v1 0x0f
+                0x31, 0x0f, // 0x0204: se v1 0x0f
+                0x00, 0x00, // 0x0206: illegal, should be skipped
+                0x65, 0xc1, // 0x0208: ld v5 0xc1
+                0x61, 0xc1, // 0x020a: ld v1 0xc1
+                0x51, 0x50, // 0x020c: se v1 v5
+                0x00, 0x00, // 0x020e: illegal, should be skipped
+                0x41, 0x50, // 0x0210: sne v1 0x50
+                0x00, 0x00, // 0x0212: illegal, should be skipped
+            ],
+            ENTRY_POINT,
+        );
+
+        assert_eq!(cpu.pc, 0x0200);
+
+        cpu.run(&mut bus);
+        assert_eq!(cpu.pc, 0x0202);
+
+        cpu.run(&mut bus);
+        assert_eq!(cpu.pc, 0x0204);
+        assert_eq!(cpu.vx[1], 0x0f);
+
+        cpu.run(&mut bus);
+        assert_eq!(cpu.pc, 0x0208);
+        assert_eq!(cpu.vx[1], 0x0f);
+
+        cpu.run(&mut bus);
+        assert_eq!(cpu.pc, 0x020a);
+        assert_eq!(cpu.vx[1], 0x0f);
+        assert_eq!(cpu.vx[5], 0xc1);
+
+        cpu.run(&mut bus);
+        assert_eq!(cpu.pc, 0x020c);
+        assert_eq!(cpu.vx[1], 0xc1);
+        assert_eq!(cpu.vx[5], 0xc1);
+
+        cpu.run(&mut bus);
+        assert_eq!(cpu.pc, 0x0210);
+        assert_eq!(cpu.vx[1], 0xc1);
+        assert_eq!(cpu.vx[5], 0xc1);
+
+        cpu.run(&mut bus);
+        assert_eq!(cpu.pc, 0x0214);
+        assert_eq!(cpu.vx[1], 0xc1);
+        assert_eq!(cpu.vx[5], 0xc1);
     }
 }
