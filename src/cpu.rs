@@ -1,6 +1,7 @@
+#![allow(dead_code)]
 use crate::{bus::Bus, stack::Stack, ENTRY_POINT};
 
-pub struct CPU {
+pub struct Cpu {
     vx: [u8; 16],
     i: u16,
     delay_timer: u16,
@@ -18,7 +19,7 @@ struct InstructionData {
     n: u8,
 }
 
-impl CPU {
+impl Cpu {
     pub fn new() -> Self {
         Self {
             vx: [0; 16],
@@ -45,7 +46,7 @@ impl CPU {
                     self.pc += 2;
                 }
                 0xee => {
-                    let addr = self.stack.pop().unwrap();
+                    let addr = self.stack.pop().unwrap(); // TODO: Handle error
                     self.pc = addr;
                 }
                 _ => unimplemented!(),
@@ -54,7 +55,7 @@ impl CPU {
                 self.pc = params.nnn;
             }
             0x2 => {
-                self.stack.push(self.pc + 2);
+                self.stack.push(self.pc + 2).unwrap(); // TODO: Handle error
                 self.pc = params.nnn;
             }
             _ => todo!(),
@@ -92,7 +93,7 @@ mod tests {
 
     #[test]
     fn fetch_instruction() {
-        let mut cpu = CPU::new();
+        let mut cpu = Cpu::new();
         let mut bus = Bus::new();
         bus.write_ram(&[0x00, 0xE0], 0x200);
 
@@ -103,7 +104,7 @@ mod tests {
 
     #[test]
     fn parse_instruction() {
-        let params = CPU::parse_instruction(0x1234);
+        let params = Cpu::parse_instruction(0x1234);
 
         assert_eq!(params.instruction, 0x1234);
         assert_eq!(params.nnn, 0x0234);
@@ -115,7 +116,7 @@ mod tests {
 
     #[test]
     fn subroutine() {
-        let mut cpu = CPU::new();
+        let mut cpu = Cpu::new();
         let mut bus = Bus::new();
         bus.write_ram(
             &[

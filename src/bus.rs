@@ -1,7 +1,8 @@
-use crate::{framebuffer::Framebuffer, keyboard::Keyboard, ram::RAM};
+#![allow(dead_code)]
+use crate::{framebuffer::Framebuffer, keyboard::Keyboard, ram::Ram};
 
 pub struct Bus {
-    ram: RAM,
+    ram: Ram,
     keyboard: Keyboard,
     framebuffer: Framebuffer,
 }
@@ -9,7 +10,7 @@ pub struct Bus {
 impl Bus {
     pub fn new() -> Self {
         Self {
-            ram: RAM::new(),
+            ram: Ram::new(),
             keyboard: Keyboard::new(),
             framebuffer: Framebuffer::new(),
         }

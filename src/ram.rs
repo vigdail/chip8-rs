@@ -6,11 +6,11 @@ pub enum RamError {
     BadReadAddress,
 }
 
-pub struct RAM {
+pub struct Ram {
     memory: [u8; RAM_SIZE],
 }
 
-impl RAM {
+impl Ram {
     pub fn new() -> Self {
         Self {
             memory: [0; RAM_SIZE],
@@ -45,7 +45,7 @@ mod tests {
 
     #[test]
     fn write() {
-        let mut ram = RAM::new();
+        let mut ram = Ram::new();
 
         let result = ram.write(&[0xff, 0xfe], 0);
         assert!(result.is_ok());
@@ -53,7 +53,7 @@ mod tests {
 
     #[test]
     fn read_byte() {
-        let mut ram = RAM::new();
+        let mut ram = Ram::new();
 
         ram.write(&[0xff, 0xfe], 0).unwrap();
 
