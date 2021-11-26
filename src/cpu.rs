@@ -159,6 +159,16 @@ impl Cpu {
 
                 self.pc += 2;
             }
+            0x9 => {
+                // SNE vx, vy
+                let vx = self.vx[params.x as usize];
+                let vy = self.vx[params.y as usize];
+
+                if vx != vy {
+                    self.pc += 2;
+                }
+                self.pc += 2;
+            }
             _ => todo!(),
         }
     }
@@ -257,6 +267,8 @@ mod tests {
                 0x00, 0x00, // 0x020e: illegal, should be skipped
                 0x41, 0x50, // 0x0210: sne v1 0x50
                 0x00, 0x00, // 0x0212: illegal, should be skipped
+                0x91, 0x50, // 0x0214: sne v1, v2
+                0x61, 0xff, // 0x0212: ld v1 0xff
             ],
             ENTRY_POINT,
         );
@@ -292,6 +304,12 @@ mod tests {
         cpu.run(&mut bus);
         assert_eq!(cpu.pc, 0x0214);
         assert_eq!(cpu.vx[1], 0xc1);
+        assert_eq!(cpu.vx[5], 0xc1);
+
+        cpu.run(&mut bus);
+        cpu.run(&mut bus);
+        assert_eq!(cpu.pc, 0x0218);
+        assert_eq!(cpu.vx[1], 0xff);
         assert_eq!(cpu.vx[5], 0xc1);
     }
 
@@ -343,8 +361,8 @@ mod tests {
                 0x82, 0x06, // 0x021a: shr v2       (v2 = 0b01000010)
                 0x81, 0x27, // 0x021c: subn v1, v2  (v1 = 0b11111000)
                 0x81, 0x0e, // 0x021e: shl v1       (v1 = 0b11110000)
-                0x81, 0x06, // 0x0218: shr v1       (v1 = 0b01111000)
-                0x81, 0x0e, // 0x021e: shl v1       (v1 = 0b11110000)
+                0x81, 0x06, // 0x0220: shr v1       (v1 = 0b01111000)
+                0x81, 0x0e, // 0x0222: shl v1       (v1 = 0b11110000)
             ],
             ENTRY_POINT,
         );
