@@ -1,13 +1,15 @@
-#![allow(dead_code)]
+use rand::{prelude::ThreadRng, Rng};
+
 use crate::{bus::Bus, stack::Stack, ENTRY_POINT};
 
 pub struct Cpu {
     vx: [u8; 16],
     i: u16,
-    delay_timer: u16,
-    sound_timer: u16,
+    delay_timer: u8,
+    sound_timer: u8,
     pc: u16,
     stack: Stack,
+    rng: ThreadRng,
 }
 
 #[derive(Debug)]
@@ -29,6 +31,7 @@ impl Cpu {
             sound_timer: 0,
             pc: ENTRY_POINT as u16,
             stack: Stack::new(),
+            rng: rand::thread_rng(),
         }
     }
 
@@ -154,7 +157,12 @@ impl Cpu {
                         self.write_reg(0xf, (vx & 0x80) >> 7);
                         self.write_reg(params.x, vx << 1);
                     }
-                    _ => {}
+                    _ => {
+                        panic!(
+                            "Unknown 0x8xy# instruction: {:x?} at {:x?}",
+                            params.instruction, self.pc
+                        );
+                    }
                 }
 
                 self.pc += 2;
@@ -169,6 +177,123 @@ impl Cpu {
                 }
                 self.pc += 2;
             }
+            0xa => {
+                // LD I, addr
+                self.i = params.nnn;
+                self.pc += 2;
+            }
+            0xb => {
+                // JP v0, addr
+                let v0 = self.vx[0];
+                self.pc = (v0 as u16).wrapping_add(params.nnn);
+            }
+            0xc => {
+                // RND vx, byte
+                let rand_number = self.rng.gen_range(0x00..0xff);
+                self.write_reg(params.x, rand_number & params.kk);
+                self.pc += 2;
+            }
+            0xd => {
+                // DRW vx, vy, n
+                todo!()
+            }
+            0xe => {
+                match params.kk {
+                    0x9E => {
+                        // SKP vx
+                        let vx = self.vx[params.x as usize];
+                        if bus.is_key_pressed(vx) {
+                            self.pc += 4;
+                        } else {
+                            self.pc += 2;
+                        }
+                    }
+                    0xA1 => {
+                        // SKNP vx
+                        let vx = self.vx[params.x as usize];
+                        if !bus.is_key_pressed(vx) {
+                            self.pc += 4;
+                        } else {
+                            self.pc += 2;
+                        }
+                    }
+                    _ => {
+                        panic!(
+                            "Unknown 0xex## instruction: {:x?} at {:x?}",
+                            params.instruction, self.pc
+                        );
+                    }
+                }
+            }
+            0xf => match params.kk {
+                0x07 => {
+                    // LD vx, DT
+                    self.write_reg(params.x, self.delay_timer);
+                    self.pc += 2;
+                }
+                0x0a => {
+                    // LD vx, K
+                    if let Some(key) = bus.get_key_pressed() {
+                        self.write_reg(params.x, key);
+                        self.pc += 2;
+                    }
+                }
+                0x15 => {
+                    // LD DT, vx
+                    let vx = self.vx[params.x as usize];
+                    self.delay_timer = vx;
+                    self.pc += 2;
+                }
+                0x18 => {
+                    // LD ST, vx
+                    let vx = self.vx[params.x as usize];
+                    self.sound_timer = vx;
+                    self.pc += 2;
+                    // TODO: replace this this some log crate
+                    println!("Sound is not implemented");
+                }
+                0x1e => {
+                    // ADD I, vx
+                    let vx = self.vx[params.x as usize] as u16;
+                    self.i = self.i.wrapping_add(vx);
+                    self.pc += 2;
+                }
+                0x29 => {
+                    // LD F, vx
+                    todo!()
+                }
+                0x33 => {
+                    // LD B, vx
+                    let vx = self.vx[params.x as usize];
+                    bus.write_ram(&[vx / 100, (vx % 100) / 10, vx % 10], self.i as usize);
+                    self.pc += 2;
+                }
+                0x55 => {
+                    // LD [I], vx
+                    for index in 0..=params.x {
+                        let index = index as usize;
+                        let vx = self.vx[index];
+                        bus.write_ram(&[vx], self.i as usize + index);
+                    }
+                    self.i += params.x as u16 + 1;
+                    self.pc += 2;
+                }
+                0x65 => {
+                    // LD vx, [I]
+                    for index in 0..=params.x {
+                        let value = bus.read_ram(self.i as usize + index as usize);
+                        self.write_reg(index, value);
+                    }
+                    self.i += params.x as u16 + 1;
+                    self.pc += 2;
+                }
+                _ => {
+                    panic!(
+                        "Unknown 0xfx## instruction: {:x?} at {:x?}",
+                        params.instruction, self.pc
+                    );
+                }
+            },
             _ => todo!(),
         }
     }
@@ -438,5 +563,44 @@ mod tests {
         assert_eq!(cpu.vx[1], 0xf0);
         assert_eq!(cpu.vx[2], 0x42);
         assert_eq!(cpu.vx[0xf], 0x0);
+    }
+
+    #[test]
+    fn inst_0xannn() {
+        let mut cpu = Cpu::new();
+        let mut bus = Bus::new();
+        bus.write_ram(
+            &[
+                0xA4, 0x00, // 0x0200: LD I, 0x400
+            ],
+            ENTRY_POINT,
+        );
+
+        assert_eq!(cpu.i, 0x0000);
+        assert_eq!(cpu.pc, 0x0200);
+        cpu.run(&mut bus);
+        assert_eq!(cpu.i, 0x0400);
+        assert_eq!(cpu.pc, 0x0202);
+    }
+
+    #[test]
+    fn inst_0xbnnn() {
+        let mut cpu = Cpu::new();
+        let mut bus = Bus::new();
+        bus.write_ram(
+            &[
+                0x60, 0x10, // 0x0200: LD v0, 0x10
+                0xb4, 0x00, // 0x0202: JMP v0, 0x0400 (to 0x0410)
+            ],
+            ENTRY_POINT,
+        );
+
+        assert_eq!(cpu.pc, 0x0200);
+        cpu.run(&mut bus);
+        assert_eq!(cpu.vx[0], 0x10);
+        assert_eq!(cpu.pc, 0x0202);
+        cpu.run(&mut bus);
+        assert_eq!(cpu.vx[0], 0x10);
+        assert_eq!(cpu.pc, 0x0410);
     }
 }

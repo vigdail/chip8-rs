@@ -27,4 +27,12 @@ impl Bus {
     pub fn clear_screen(&mut self) {
         self.framebuffer.clear();
     }
+
+    pub fn get_key_pressed(&self) -> Option<u8> {
+        todo!()
+    }
+
+    pub fn is_key_pressed(&self, _key: u8) -> bool {
+        todo!()
+    }
 }
