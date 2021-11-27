@@ -9,7 +9,7 @@ mod keyboard;
 mod ram;
 mod stack;
 
-pub const ENTRY_POINT: usize = 0x200;
+pub const ENTRY_POINT: u16 = 0x200;
 
 pub struct Chip8 {
     bus: Bus,

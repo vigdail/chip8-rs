@@ -195,7 +195,7 @@ impl Cpu {
             }
             0xd => {
                 // DRW vx, vy, n
-                todo!()
+                self.draw(bus, params);
             }
             0xe => {
                 match params.kk {
@@ -265,15 +265,14 @@ impl Cpu {
                 0x33 => {
                     // LD B, vx
                     let vx = self.vx[params.x as usize];
-                    bus.write_ram(&[vx / 100, (vx % 100) / 10, vx % 10], self.i as usize);
+                    bus.write_ram(&[vx / 100, (vx % 100) / 10, vx % 10], self.i);
                     self.pc += 2;
                 }
                 0x55 => {
                     // LD [I], vx
                     for index in 0..=params.x {
-                        let index = index as usize;
-                        let vx = self.vx[index];
-                        bus.write_ram(&[vx], self.i as usize + index);
+                        let vx = self.vx[index as usize];
+                        bus.write_ram(&[vx], self.i + index as u16);
                     }
                     self.i += params.x as u16 + 1;
                     self.pc += 2;
@@ -281,7 +280,7 @@ impl Cpu {
                 0x65 => {
                     // LD vx, [I]
                     for index in 0..=params.x {
-                        let value = bus.read_ram(self.i as usize + index as usize);
+                        let value = bus.read_ram(self.i + index as u16);
                         self.write_reg(index, value);
                     }
                     self.i += params.x as u16 + 1;
@@ -294,7 +293,10 @@ impl Cpu {
                     );
                 }
             },
-            _ => todo!(),
+            _ => panic!(
+                "Unknown instruction: {:x?} at {:x?}",
+                params.instruction, self.pc
+            ),
         }
     }
 
@@ -303,8 +305,8 @@ impl Cpu {
     }
 
     fn fetch_instruction(&mut self, bus: &mut Bus) -> u16 {
-        let hi = bus.read_ram(self.pc as usize) as u16;
-        let lo = bus.read_ram((self.pc + 1) as usize) as u16;
+        let hi = bus.read_ram(self.pc) as u16;
+        let lo = bus.read_ram(self.pc.wrapping_add(1)) as u16;
 
         hi << 8 | lo
     }
@@ -323,6 +325,27 @@ impl Cpu {
             x,
             y,
             n,
+        }
+    }
+
+    fn draw(&mut self, bus: &mut Bus, params: InstructionData) {
+        let x = self.vx[params.x as usize];
+        let y = self.vx[params.y as usize];
+        let height = params.n;
+
+        let has_collision = (0..height).fold(false, |flag, i| {
+            let byte = bus.read_ram(self.i.wrapping_add(i as u16));
+            if bus.draw(x, y.wrapping_add(i), byte) {
+                true
+            } else {
+                flag
+            }
+        });
+
+        if has_collision {
+            self.vx[0xf] = 1;
+        } else {
+            self.vx[0xf] = 0;
         }
     }
 }

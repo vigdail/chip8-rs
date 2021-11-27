@@ -16,12 +16,12 @@ impl Bus {
         }
     }
 
-    pub fn read_ram(&self, address: usize) -> u8 {
-        self.ram.read(address).unwrap() // TODO: Handle error
+    pub fn read_ram(&self, address: u16) -> u8 {
+        self.ram.read(address as usize).unwrap() // TODO: Handle error
     }
 
-    pub fn write_ram(&mut self, data: &[u8], address: usize) {
-        self.ram.write(data, address).unwrap(); // TODO: Handle error
+    pub fn write_ram(&mut self, data: &[u8], address: u16) {
+        self.ram.write(data, address as usize).unwrap(); // TODO: Handle error
     }
 
     pub fn clear_screen(&mut self) {
@@ -33,6 +33,10 @@ impl Bus {
     }
 
     pub fn is_key_pressed(&self, _key: u8) -> bool {
+        todo!()
+    }
+
+    pub fn draw(&mut self, _x: u8, _y: u8, _data: u8) -> bool {
         todo!()
     }
 }
