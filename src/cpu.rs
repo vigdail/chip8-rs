@@ -260,7 +260,8 @@ impl Cpu {
                 }
                 0x29 => {
                     // LD F, vx
-                    todo!()
+                    self.i = self.vx[params.x as usize] as u16 * 5;
+                    self.pc += 2;
                 }
                 0x33 => {
                     // LD B, vx
