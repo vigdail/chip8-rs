@@ -69,21 +69,21 @@ impl Cpu {
             }
             0x3 => {
                 // SE vx, byte
-                if self.vx[params.x as usize] == params.kk {
+                if self.read_reg(params.x) == params.kk {
                     self.pc += 2;
                 }
                 self.pc += 2;
             }
             0x4 => {
                 // SNE vx, byte
-                if self.vx[params.x as usize] != params.kk {
+                if self.read_reg(params.x) != params.kk {
                     self.pc += 2;
                 }
                 self.pc += 2;
             }
             0x5 => {
                 // SE vx, vy
-                if self.vx[params.x as usize] == self.vx[params.y as usize] {
+                if self.read_reg(params.x) == self.read_reg(params.y) {
                     self.pc += 2;
                 }
                 self.pc += 2;
@@ -95,12 +95,12 @@ impl Cpu {
             }
             0x7 => {
                 // ADD vx, byte
-                self.write_reg(params.x, self.vx[params.x as usize].wrapping_add(params.kk));
+                self.write_reg(params.x, self.read_reg(params.x).wrapping_add(params.kk));
                 self.pc += 2;
             }
             0x8 => {
-                let vx = self.vx[params.x as usize];
-                let vy = self.vx[params.y as usize];
+                let vx = self.read_reg(params.x);
+                let vy = self.read_reg(params.y);
                 match params.n {
                     0x0 => {
                         // LD vx, vy
@@ -169,8 +169,8 @@ impl Cpu {
             }
             0x9 => {
                 // SNE vx, vy
-                let vx = self.vx[params.x as usize];
-                let vy = self.vx[params.y as usize];
+                let vx = self.read_reg(params.x);
+                let vy = self.read_reg(params.y);
 
                 if vx != vy {
                     self.pc += 2;
@@ -184,7 +184,7 @@ impl Cpu {
             }
             0xb => {
                 // JP v0, addr
-                let v0 = self.vx[0];
+                let v0 = self.read_reg(0);
                 self.pc = (v0 as u16).wrapping_add(params.nnn);
             }
             0xc => {
@@ -201,7 +201,7 @@ impl Cpu {
                 match params.kk {
                     0x9E => {
                         // SKP vx
-                        let vx = self.vx[params.x as usize];
+                        let vx = self.read_reg(params.x);
                         if bus.is_key_pressed(vx) {
                             self.pc += 4;
                         } else {
@@ -210,7 +210,7 @@ impl Cpu {
                     }
                     0xA1 => {
                         // SKNP vx
-                        let vx = self.vx[params.x as usize];
+                        let vx = self.read_reg(params.x);
                         if !bus.is_key_pressed(vx) {
                             self.pc += 4;
                         } else {
@@ -240,39 +240,37 @@ impl Cpu {
                 }
                 0x15 => {
                     // LD DT, vx
-                    let vx = self.vx[params.x as usize];
-                    self.delay_timer = vx;
+                    self.delay_timer = self.read_reg(params.x);
                     self.pc += 2;
                 }
                 0x18 => {
                     // LD ST, vx
-                    let vx = self.vx[params.x as usize];
-                    self.sound_timer = vx;
+                    self.sound_timer = self.read_reg(params.x);
                     self.pc += 2;
                     // TODO: replace this this some log crate
                     println!("Sound is not implemented");
                 }
                 0x1e => {
                     // ADD I, vx
-                    let vx = self.vx[params.x as usize] as u16;
+                    let vx = self.read_reg(params.x) as u16;
                     self.i = self.i.wrapping_add(vx);
                     self.pc += 2;
                 }
                 0x29 => {
                     // LD F, vx
-                    self.i = self.vx[params.x as usize] as u16 * 5;
+                    self.i = self.read_reg(params.x) as u16 * 5;
                     self.pc += 2;
                 }
                 0x33 => {
                     // LD B, vx
-                    let vx = self.vx[params.x as usize];
+                    let vx = self.read_reg(params.x);
                     bus.write_ram(&[vx / 100, (vx % 100) / 10, vx % 10], self.i);
                     self.pc += 2;
                 }
                 0x55 => {
                     // LD [I], vx
                     for index in 0..=params.x {
-                        let vx = self.vx[index as usize];
+                        let vx = self.read_reg(index);
                         bus.write_ram(&[vx], self.i + index as u16);
                     }
                     self.i += params.x as u16 + 1;
@@ -305,6 +303,10 @@ impl Cpu {
         self.vx[x as usize] = value;
     }
 
+    fn read_reg(&self, x: u8) -> u8 {
+        self.vx[x as usize]
+    }
+
     fn fetch_instruction(&mut self, bus: &mut Bus) -> u16 {
         let hi = bus.read_ram(self.pc) as u16;
         let lo = bus.read_ram(self.pc.wrapping_add(1)) as u16;
@@ -330,8 +332,8 @@ impl Cpu {
     }
 
     fn draw(&mut self, bus: &mut Bus, params: InstructionData) {
-        let x = self.vx[params.x as usize];
-        let y = self.vx[params.y as usize];
+        let x = self.read_reg(params.x);
+        let y = self.read_reg(params.y);
         let height = params.n;
 
         let has_collision = (0..height).fold(false, |flag, i| {
@@ -344,9 +346,9 @@ impl Cpu {
         });
 
         if has_collision {
-            self.vx[0xf] = 1;
+            self.write_reg(0xf, 1);
         } else {
-            self.vx[0xf] = 0;
+            self.write_reg(0xf, 0);
         }
     }
 }
