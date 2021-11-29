@@ -37,19 +37,21 @@ impl Cpu {
 
     pub fn run(&mut self, bus: &mut Bus) {
         let instruction = self.fetch_instruction(bus);
+
         let params = Self::parse_instruction(instruction);
         println!("Params: {:?}", params);
         self.execute(bus, params);
     }
 
     fn execute(&mut self, bus: &mut Bus, params: InstructionData) {
+        self.pc += 2;
+
         let f = (params.instruction & 0xf000) >> 12;
         match f {
             0x0 => match params.kk {
                 0x0e => {
                     // CLS
                     bus.clear_screen();
-                    self.pc += 2;
                 }
                 0xee => {
                     // RET
@@ -64,7 +66,7 @@ impl Cpu {
             }
             0x2 => {
                 // CALL nnn
-                self.stack.push(self.pc + 2).unwrap(); // TODO: Handle error
+                self.stack.push(self.pc).unwrap(); // TODO: Handle error
                 self.pc = params.nnn;
             }
             0x3 => {
@@ -72,31 +74,26 @@ impl Cpu {
                 if self.read_reg(params.x) == params.kk {
                     self.pc += 2;
                 }
-                self.pc += 2;
             }
             0x4 => {
                 // SNE vx, byte
                 if self.read_reg(params.x) != params.kk {
                     self.pc += 2;
                 }
-                self.pc += 2;
             }
             0x5 => {
                 // SE vx, vy
                 if self.read_reg(params.x) == self.read_reg(params.y) {
                     self.pc += 2;
                 }
-                self.pc += 2;
             }
             0x6 => {
                 // LD vx, byte
                 self.write_reg(params.x, params.kk);
-                self.pc += 2;
             }
             0x7 => {
                 // ADD vx, byte
                 self.write_reg(params.x, self.read_reg(params.x).wrapping_add(params.kk));
-                self.pc += 2;
             }
             0x8 => {
                 let vx = self.read_reg(params.x);
@@ -164,8 +161,6 @@ impl Cpu {
                         );
                     }
                 }
-
-                self.pc += 2;
             }
             0x9 => {
                 // SNE vx, vy
@@ -175,12 +170,10 @@ impl Cpu {
                 if vx != vy {
                     self.pc += 2;
                 }
-                self.pc += 2;
             }
             0xa => {
                 // LD I, addr
                 self.i = params.nnn;
-                self.pc += 2;
             }
             0xb => {
                 // JP v0, addr
@@ -191,7 +184,6 @@ impl Cpu {
                 // RND vx, byte
                 let rand_number = self.rng.gen_range(0x00..0xff);
                 self.write_reg(params.x, rand_number & params.kk);
-                self.pc += 2;
             }
             0xd => {
                 // DRW vx, vy, n
@@ -203,8 +195,6 @@ impl Cpu {
                         // SKP vx
                         let vx = self.read_reg(params.x);
                         if bus.is_key_pressed(vx) {
-                            self.pc += 4;
-                        } else {
                             self.pc += 2;
                         }
                     }
@@ -212,8 +202,6 @@ impl Cpu {
                         // SKNP vx
                         let vx = self.read_reg(params.x);
                         if !bus.is_key_pressed(vx) {
-                            self.pc += 4;
-                        } else {
                             self.pc += 2;
                         }
                     }
@@ -229,24 +217,20 @@ impl Cpu {
                 0x07 => {
                     // LD vx, DT
                     self.write_reg(params.x, self.delay_timer);
-                    self.pc += 2;
                 }
                 0x0a => {
                     // LD vx, K
                     if let Some(key) = bus.get_key_pressed() {
                         self.write_reg(params.x, key);
-                        self.pc += 2;
                     }
                 }
                 0x15 => {
                     // LD DT, vx
                     self.delay_timer = self.read_reg(params.x);
-                    self.pc += 2;
                 }
                 0x18 => {
                     // LD ST, vx
                     self.sound_timer = self.read_reg(params.x);
-                    self.pc += 2;
                     // TODO: replace this this some log crate
                     println!("Sound is not implemented");
                 }
@@ -254,18 +238,15 @@ impl Cpu {
                     // ADD I, vx
                     let vx = self.read_reg(params.x) as u16;
                     self.i = self.i.wrapping_add(vx);
-                    self.pc += 2;
                 }
                 0x29 => {
                     // LD F, vx
                     self.i = self.read_reg(params.x) as u16 * 5;
-                    self.pc += 2;
                 }
                 0x33 => {
                     // LD B, vx
                     let vx = self.read_reg(params.x);
                     bus.write_ram(&[vx / 100, (vx % 100) / 10, vx % 10], self.i);
-                    self.pc += 2;
                 }
                 0x55 => {
                     // LD [I], vx
@@ -274,7 +255,6 @@ impl Cpu {
                         bus.write_ram(&[vx], self.i + index as u16);
                     }
                     self.i += params.x as u16 + 1;
-                    self.pc += 2;
                 }
                 0x65 => {
                     // LD vx, [I]
@@ -283,7 +263,6 @@ impl Cpu {
                         self.write_reg(index, value);
                     }
                     self.i += params.x as u16 + 1;
-                    self.pc += 2;
                 }
                 _ => {
                     panic!(
