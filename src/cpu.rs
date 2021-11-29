@@ -43,8 +43,6 @@ impl Cpu {
     }
 
     fn execute(&mut self, bus: &mut Bus, params: InstructionData) {
-        self.pc += 2;
-
         let f = (params.instruction & 0xf000) >> 12;
         match f {
             0x0 => match params.kk {
@@ -287,6 +285,7 @@ impl Cpu {
     fn fetch_instruction(&mut self, bus: &mut Bus) -> u16 {
         let hi = bus.read_ram(self.pc) as u16;
         let lo = bus.read_ram(self.pc.wrapping_add(1)) as u16;
+        self.pc = self.pc.wrapping_add(2);
 
         hi << 8 | lo
     }
