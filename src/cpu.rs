@@ -39,7 +39,6 @@ impl Cpu {
         let instruction = self.fetch_instruction(bus);
 
         let params = Self::parse_instruction(instruction);
-        println!("Params: {:?}", params);
         self.execute(bus, params);
     }
 
@@ -105,7 +104,6 @@ impl Cpu {
                     }
                     0x1 => {
                         // OR vx, vy
-                        println!("vx = {:2x?}, vy = {:2x?}, or = {:2x?}", vx, vy, vx | vy);
                         self.write_reg(params.x, vx | vy);
                     }
                     0x2 => {
