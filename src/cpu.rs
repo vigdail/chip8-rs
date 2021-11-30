@@ -114,21 +114,15 @@ impl Cpu {
                     }
                     0x4 => {
                         // ADD vx, vy
-                        let sum = vx as u16 + vy as u16;
-                        self.write_reg(params.x, sum as u8);
-                        if sum > 0xff {
-                            self.write_reg(0xf, 1);
-                        }
+                        let (value, over) = vx.overflowing_add(vy);
+                        self.write_reg(params.x, value);
+                        self.write_reg(0xf, over as u8);
                     }
                     0x5 => {
                         // SUB vx, vy
-                        if vx > vy {
-                            self.write_reg(0xf, 1);
-                        } else {
-                            self.write_reg(0xf, 0);
-                        }
-
-                        self.write_reg(params.x, vx.wrapping_sub(vy));
+                        let (value, over) = vx.overflowing_sub(vy);
+                        self.write_reg(params.x, value);
+                        self.write_reg(0xf, !over as u8);
                     }
                     0x6 => {
                         // SHR vx
@@ -137,13 +131,9 @@ impl Cpu {
                     }
                     0x7 => {
                         // SUBN vx, vy
-                        if vy > vx {
-                            self.write_reg(0xf, 1);
-                        } else {
-                            self.write_reg(0xf, 0);
-                        }
-
-                        self.write_reg(params.x, vy.wrapping_sub(vx));
+                        let (value, over) = vy.overflowing_sub(vx);
+                        self.write_reg(params.x, value);
+                        self.write_reg(0xf, !over as u8);
                     }
                     0xe => {
                         // SHL vx
@@ -321,11 +311,7 @@ impl Cpu {
             }
         });
 
-        if has_collision {
-            self.write_reg(0xf, 1);
-        } else {
-            self.write_reg(0xf, 0);
-        }
+        self.write_reg(0xf, has_collision as u8);
     }
 }
 
