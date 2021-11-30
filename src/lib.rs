@@ -33,6 +33,10 @@ impl Chip8 {
         self.bus.write_ram(data, ENTRY_POINT);
     }
 
+    pub fn get_framebuffer(&self) -> &[u8] {
+        self.bus.get_framebuffer()
+    }
+
     pub fn run(&mut self) {
         self.cpu.run(&mut self.bus);
     }

@@ -591,4 +591,31 @@ mod tests {
         assert_eq!(cpu.vx[0], 0x10);
         assert_eq!(cpu.pc, 0x0410);
     }
+
+    #[test]
+    fn draw() {
+        let mut cpu = Cpu::new();
+        let mut bus = Bus::new();
+        bus.write_ram(
+            &[
+                0x60, 0x8f, // 0x0200: LD v0, 0x8F
+                0xf0, 0x55, // 0x0202: LD [I], 0
+                0x60, 0x00, // 0x0204: LD v0, 0x00
+                0xa0, 0x00, // 0x0206: LD I, 0x000
+                0xd0, 0x01, // 0x0208: DRW vx, vy, 0x01
+            ],
+            ENTRY_POINT,
+        );
+
+        cpu.run(&mut bus);
+        assert_eq!(cpu.vx[0], 0x8f);
+        cpu.run(&mut bus);
+        assert_eq!(bus.read_ram(0), 0x8f);
+        cpu.run(&mut bus);
+        assert_eq!(cpu.vx[0], 0x00);
+        cpu.run(&mut bus);
+        assert_eq!(cpu.i, 0x00);
+        cpu.run(&mut bus);
+        assert_eq!(&bus.get_framebuffer()[0..8], &[1, 0, 0, 0, 1, 1, 1, 1]);
+    }
 }
