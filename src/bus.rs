@@ -40,7 +40,11 @@ impl Bus {
         self.keyboard.set_key_pressed(key)
     }
 
-    pub fn draw(&mut self, _x: u8, _y: u8, _data: u8) -> bool {
-        todo!()
+    pub fn draw(&mut self, x: u8, y: u8, byte: u8) -> bool {
+        self.framebuffer.draw(x, y, byte)
+    }
+
+    pub fn get_framebuffer(&self) -> &[u8] {
+        self.framebuffer.get_buffer()
     }
 }
