@@ -37,6 +37,10 @@ impl Chip8 {
         self.bus.get_framebuffer()
     }
 
+    pub fn set_key_pressed(&mut self, key: Option<u8>) {
+        self.bus.set_key_pressed(key);
+    }
+
     pub fn run(&mut self) {
         self.cpu.run(&mut self.bus);
     }

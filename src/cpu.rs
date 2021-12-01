@@ -55,7 +55,12 @@ impl Cpu {
                     let addr = self.stack.pop().unwrap(); // TODO: Handle error
                     self.pc = addr;
                 }
-                _ => unimplemented!(),
+                _ => {
+                    panic!(
+                        "Unknown 0x0### instruction: {:x?} at {:x?}",
+                        params.instruction, self.pc
+                    );
+                }
             },
             0x1 => {
                 // JP nnn
