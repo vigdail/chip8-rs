@@ -56,7 +56,7 @@ impl Cpu {
         let f = (params.instruction & 0xf000) >> 12;
         match f {
             0x0 => match params.kk {
-                0x0e => {
+                0xe0 => {
                     // CLS
                     bus.clear_screen();
                 }
