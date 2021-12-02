@@ -44,6 +44,10 @@ impl Chip8 {
     pub fn run(&mut self) {
         self.cpu.run(&mut self.bus);
     }
+
+    pub fn tick_timers(&mut self) {
+        self.cpu.tick_timers();
+    }
 }
 
 impl Default for Chip8 {

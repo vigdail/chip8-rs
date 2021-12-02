@@ -42,6 +42,16 @@ impl Cpu {
         self.execute(bus, params);
     }
 
+    pub fn tick_timers(&mut self) {
+        if self.delay_timer > 0 {
+            self.delay_timer -= 1;
+        }
+
+        if self.sound_timer > 0 {
+            self.sound_timer -= 1;
+        }
+    }
+
     fn execute(&mut self, bus: &mut Bus, params: InstructionData) {
         let f = (params.instruction & 0xf000) >> 12;
         match f {

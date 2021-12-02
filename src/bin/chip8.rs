@@ -36,6 +36,7 @@ fn main() {
     let mut last_draw = Instant::now();
     let mut last_run = Instant::now();
     let mut last_key_update = Instant::now();
+    let mut last_timer = Instant::now();
 
     while window.is_open() && !window.is_key_down(Key::Escape) {
         let time = Instant::now();
@@ -47,6 +48,11 @@ fn main() {
             chip8.set_key_pressed(key_pressed);
 
             last_key_update = Instant::now();
+        }
+
+        if time - last_timer >= Duration::from_micros(16667) {
+            chip8.tick_timers();
+            last_timer = Instant::now();
         }
 
         if Instant::now() - last_run > Duration::from_millis(2) {
