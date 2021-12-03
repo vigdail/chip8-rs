@@ -21,7 +21,7 @@ fn main() {
     let mut buffer = [0; WIDTH * HEIGHT];
 
     let mut chip8 = Chip8::new();
-    chip8.load_program("roms/PONG");
+    chip8.load_program("roms/test_opcode.ch8");
 
     let mut last_draw = Instant::now();
     let mut last_run = Instant::now();
