@@ -1,4 +1,3 @@
-#![allow(dead_code)]
 use crate::{framebuffer::Framebuffer, keyboard::Keyboard, ram::Ram};
 
 pub struct Bus {
