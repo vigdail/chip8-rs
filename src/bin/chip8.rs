@@ -21,17 +21,7 @@ fn main() {
     let mut buffer = [0; WIDTH * HEIGHT];
 
     let mut chip8 = Chip8::new();
-    let program = &[
-        0x60, 0x81, // 0x0200: LD v0, 0xaa
-        0xf0, 0x55, // 0x0202: LD [I], v0
-        0x60, 0x7e, // 0x0204: LD v0, 0x55
-        0xf0, 0x55, // 0x0206: LD [I], v0
-        0x60, 0x00, // 0x0208: LD v0, 0x00
-        0xa0, 0x00, // 0x020a: LD I, 0x000
-        0xd0, 0x02, // 0x020c: DRW vx, vy, 0x02
-        0x12, 0x0e, // 0x020e: JMP 0x020e ; infinite loop
-    ];
-    chip8.set_program(program);
+    chip8.load_program("roms/PONG");
 
     let mut last_draw = Instant::now();
     let mut last_run = Instant::now();
@@ -40,13 +30,12 @@ fn main() {
 
     while window.is_open() && !window.is_key_down(Key::Escape) {
         let time = Instant::now();
-        if time - last_key_update >= Duration::from_millis(200) {
-            let key_pressed = window
-                .get_keys_pressed(KeyRepeat::Yes)
-                .get(0)
-                .and_then(map_keycode);
+        let key_pressed = window
+            .get_keys_pressed(KeyRepeat::Yes)
+            .get(0)
+            .and_then(map_keycode);
+        if key_pressed.is_some() || time - last_key_update >= Duration::from_millis(200) {
             chip8.set_key_pressed(key_pressed);
-
             last_key_update = Instant::now();
         }
 
