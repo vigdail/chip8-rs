@@ -71,6 +71,10 @@ impl Chip8 {
     pub fn tick_timers(&mut self) {
         self.cpu.tick_timers();
     }
+
+    pub fn sound_timer(&self) -> u8 {
+        self.cpu.sound_timer()
+    }
 }
 
 impl Default for Chip8 {

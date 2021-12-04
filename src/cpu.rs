@@ -42,6 +42,10 @@ impl Cpu {
         self.execute(bus, params);
     }
 
+    pub fn sound_timer(&self) -> u8 {
+        self.sound_timer
+    }
+
     pub fn tick_timers(&mut self) {
         if self.delay_timer > 0 {
             self.delay_timer -= 1;
@@ -232,8 +236,6 @@ impl Cpu {
                 0x18 => {
                     // LD ST, vx
                     self.sound_timer = self.read_reg(params.x);
-                    // TODO: replace this this some log crate
-                    println!("Sound is not implemented");
                 }
                 0x1e => {
                     // ADD I, vx

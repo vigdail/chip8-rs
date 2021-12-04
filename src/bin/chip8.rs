@@ -1,5 +1,6 @@
 use chip8::Chip8;
 use minifb::{Key, KeyRepeat, Scale, Window, WindowOptions};
+use rodio::{source::SineWave, OutputStream, Sink};
 use std::time::{Duration, Instant};
 
 const WIDTH: usize = 64;
@@ -19,6 +20,12 @@ fn main() {
     )
     .unwrap();
     let mut buffer = [0; WIDTH * HEIGHT];
+
+    let (_stream, stream_handle) = OutputStream::try_default().unwrap();
+    let audio_sink = Sink::try_new(&stream_handle).unwrap();
+    let audio_source = SineWave::new(440);
+    audio_sink.append(audio_source);
+    audio_sink.pause();
 
     let mut chip8 = Chip8::new();
     chip8.load_program("roms/pong.ch8");
@@ -60,6 +67,12 @@ fn main() {
 
             window.update_with_buffer(&buffer, WIDTH, HEIGHT).unwrap();
             last_draw = Instant::now();
+        }
+
+        if chip8.sound_timer() > 0 {
+            audio_sink.play();
+        } else {
+            audio_sink.pause();
         }
     }
 }
