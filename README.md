@@ -5,7 +5,7 @@ For more information visit [Chip-8 wiki page](https://en.wikipedia.org/wiki/CHIP
 ![pong screenshot](./screenshots/pong.png)
 
 ## TODO
-- [ ] Playing sounds  
+- [X] Playing sounds  
 - [ ] Assembly compiler
 
 ## ROMs
