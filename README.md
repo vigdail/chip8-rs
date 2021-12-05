@@ -6,6 +6,7 @@ For more information visit [Chip-8 wiki page](https://en.wikipedia.org/wiki/CHIP
 
 ## TODO
 - [X] Playing sounds  
+- [ ] Disassembler
 - [ ] Assembly compiler
 
 ## ROMs
